@@ -8,12 +8,15 @@ import org.wahyaw.sudokusolver.entity.Square;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static org.wahyaw.sudokusolver.utility.HelperUtil.generateUnsolvedCellValueList;
+
 /**
  * Created by wahyaw on 11/20/2017.
  */
 public class SolverUtil {
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
     /**
+     * MUTATION
      * Checking whether an unsolved Cell in a Square has only one possibility for value (one candidate is true).
      * If any, set value into that Cell.
      *
@@ -21,9 +24,9 @@ public class SolverUtil {
      * @return
      */
     public static Cell checkSingleCandidateInCell(Square square){
-        Square result = new Square(square);
+        Square resultSquare = new Square(square);
 
-        for(Cell cell : result.getCells()){
+        for(Cell cell : resultSquare.getCells()){
             if(cell.getValue() == null){
                 //check each cell whether there's any single candidate
                 List<Boolean> candidates = cell.getCandidates().getCandidateList();
@@ -52,6 +55,40 @@ public class SolverUtil {
         }
 
         return null;
+    }
+
+    public static Cell checkSingleCandidateInSquare(Square square){
+        List<Integer> unsolvedCellValueList = generateUnsolvedCellValueList(square);
+        Square resultSquare = new Square(square.getCells());
+        Cell result = null;
+
+        for(int value : unsolvedCellValueList){
+            boolean isCandidateAlreadyFound = false;
+
+            for(Cell cell : resultSquare.getCells()){
+                int index = value - 1;
+                if(cell.getValue() == null){
+                    if(!isCandidateAlreadyFound){
+                        if(cell.getCandidates().getCandidateList().get(index)) {
+                            isCandidateAlreadyFound = true;
+                            result = new Cell(value, cell.getxPosition(), cell.getyPosition());
+                        }
+                    } else {
+                        if(cell.getCandidates().getCandidateList().get(index)) {
+                            //break loop for this value
+                            result = null;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (result != null){
+                return result;
+            }
+        }
+
+        return result;
     }
 
 }

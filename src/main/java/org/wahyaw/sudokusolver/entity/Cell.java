@@ -48,6 +48,12 @@ public class Cell {
         this.candidates = new Candidates(false);
     }
 
+    public Cell(Cell cell){
+        this.value = cell.value;
+        this.coordinate = cell.coordinate;
+        this.candidates = cell.candidates;
+    }
+
 
 
     public Integer getValue() {
