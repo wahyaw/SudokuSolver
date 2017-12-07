@@ -1,5 +1,8 @@
 package org.wahyaw.sudokusolver.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by wahyaw on 11/20/2017.
  *
@@ -49,9 +52,18 @@ public class Cell {
     }
 
     public Cell(Cell cell){
-        this.value = cell.value;
-        this.coordinate = cell.coordinate;
-        this.candidates = cell.candidates;
+        if(cell.value != null){
+            this.value = new Integer(cell.value);
+        }
+
+        Coordinate coordinate = new Coordinate(cell.getxPosition(), cell.getyPosition());
+        this.coordinate = coordinate;
+
+        List<Boolean> candidates = new ArrayList<>();
+        for (Boolean candidate : cell.candidates.getCandidateList()){
+            candidates.add(new Boolean(candidate));
+        }
+        this.candidates = new Candidates(candidates);
     }
 
 

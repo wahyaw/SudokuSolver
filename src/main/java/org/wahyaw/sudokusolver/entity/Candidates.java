@@ -28,6 +28,10 @@ public class Candidates {
         this.candidateList = assignAllCandidatesValue(true);
     }
 
+    public Candidates(List<Boolean> candidateList){
+        this.candidateList = candidateList;
+    }
+
     public Candidates(Boolean value) {
         this.candidateList = assignAllCandidatesValue(value);
     }
@@ -37,6 +41,10 @@ public class Candidates {
         Arrays.fill(candidateArray, value);
 
         return FixedSizeList.decorate(Arrays.asList(candidateArray));
+    }
+
+    public Candidates(Candidates candidates){
+        this.candidateList = candidates.candidateList;
     }
 
 

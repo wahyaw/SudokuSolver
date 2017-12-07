@@ -1,7 +1,9 @@
 package org.wahyaw.sudokusolver.entity;
 
+import edu.emory.mathcs.backport.java.util.Collections;
 import org.apache.commons.collections.list.FixedSizeList;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -49,4 +51,14 @@ public class Board {
     public Board(List<Square> squares) {
         this.squares = FixedSizeList.decorate(squares);
     }
+
+    public Board(Board board) {
+        List<Square> squares = new ArrayList<>();
+        for (Square square : board.squares){
+            squares.add(new Square(square));
+        }
+        this.squares = squares;
+    }
+
+
 }

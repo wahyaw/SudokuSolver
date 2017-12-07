@@ -2,7 +2,9 @@ package org.wahyaw.sudokusolver.entity;
 
 import org.apache.commons.collections.list.FixedSizeList;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,6 +41,12 @@ public class Square {
     }
 
     public Square(Square square) {
-        this.cells = square.cells;
+        List<Cell> cells = new ArrayList<>();
+
+        for (Cell cell : square.cells){
+            cells.add(new Cell(cell));
+        }
+
+        this.cells = cells;
     }
 }

@@ -1,12 +1,14 @@
 package org.wahyaw.sudokusolver.utility;
 
 import org.wahyaw.sudokusolver.entity.Board;
+import org.wahyaw.sudokusolver.entity.Candidates;
 import org.wahyaw.sudokusolver.entity.Cell;
 import org.wahyaw.sudokusolver.entity.Square;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -90,5 +92,78 @@ public class HelperUtil {
         }
 
         return board;
+    }
+
+    /**
+     * Printing board in console.
+     * Using sudoku format.
+     *
+     * @param board
+     */
+    public static void printBoard(Board board){
+        Integer[][] result = ConverterUtil.convertBoardIntoBoardArray(board);
+        for(int i = 0; i<result.length; i++){
+            System.out.printf(
+                    "  %s%s%s  |  %s%s%s  |  %s%s%s  %n",
+                    result[i][0] == null ? "0" : result[i][0],
+                    result[i][1] == null ? "0" : result[i][1],
+                    result[i][2] == null ? "0" : result[i][2],
+                    result[i][3] == null ? "0" : result[i][3],
+                    result[i][4] == null ? "0" : result[i][4],
+                    result[i][5] == null ? "0" : result[i][5],
+                    result[i][6] == null ? "0" : result[i][6],
+                    result[i][7] == null ? "0" : result[i][7],
+                    result[i][8] == null ? "0" : result[i][8]
+            );
+            if(i==2 || i==5){
+                System.out.println("-------|-------|-------");
+            }
+        }
+        System.out.println(
+                board.isSolved() ? "=========SOLVED=========" : "not solved"
+        );
+    }
+
+
+    public static boolean isBoardDeepEqual(Board board1, Board board2){
+        for(int x = 0; x < board1.getSquares().size(); x++){
+            if (!isSquareDeepEqual(board1.getSquares().get(x), board2.getSquares().get(x))){
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    public static boolean isSquareDeepEqual(Square square1, Square square2){
+        for(int x = 0; x < square1.getCells().size(); x++){
+            if (!isCellDeepEqual(square1.getCells().get(x), square2.getCells().get(x))){
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    public static boolean isCellDeepEqual(Cell cell1, Cell cell2){
+        //comparing value
+        if (!Objects.equals(cell1.getValue(),cell2.getValue())){
+            return false;
+        }
+
+        //comparing candidates
+        return isCandidatesDeepEqual(cell1.getCandidates(), cell2.getCandidates());
+    }
+
+    public static boolean isCandidatesDeepEqual(Candidates candidates1, Candidates candidates2){
+        for (int x = 0; x<candidates1.getCandidateList().size(); x++){
+            if(candidates1.getCandidateList().get(x) ^ candidates2.getCandidateList().get(x)){
+                return false;
+            }
+        }
+
+        return true;
     }
 }
