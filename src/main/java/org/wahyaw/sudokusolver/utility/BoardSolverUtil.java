@@ -3,17 +3,17 @@ package org.wahyaw.sudokusolver.utility;
 import org.wahyaw.sudokusolver.Main;
 import org.wahyaw.sudokusolver.entity.Board;
 import org.wahyaw.sudokusolver.entity.Cell;
+import org.wahyaw.sudokusolver.entity.NakedCell;
 import org.wahyaw.sudokusolver.entity.Square;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import static org.wahyaw.sudokusolver.utility.ConverterUtil.convertBoardArrayIntoBoard;
 import static org.wahyaw.sudokusolver.utility.ConverterUtil.convertBoardHorizontalIntoSquare;
 import static org.wahyaw.sudokusolver.utility.ConverterUtil.convertBoardVerticalIntoSquare;
-import static org.wahyaw.sudokusolver.utility.HelperUtil.isBoardDeepEqual;
-import static org.wahyaw.sudokusolver.utility.HelperUtil.substituteCellOfBoard;
-import static org.wahyaw.sudokusolver.utility.RemoverUtil.cleanBoardBasedOnCell;
-import static org.wahyaw.sudokusolver.utility.RemoverUtil.cleanNakedValueFromBoardCandidates;
+import static org.wahyaw.sudokusolver.utility.HelperUtil.*;
+import static org.wahyaw.sudokusolver.utility.RemoverUtil.*;
 import static org.wahyaw.sudokusolver.utility.SolverUtil.checkSingleCandidateInCell;
 import static org.wahyaw.sudokusolver.utility.SolverUtil.checkSingleCandidateInSquare;
 
@@ -36,22 +36,19 @@ public class BoardSolverUtil {
         //1. FIRST CLEANING
         resultBoard = cleanNakedValueFromBoardCandidates(resultBoard);
 
-        while (!resultBoard.isSolved() && !isBoardDeepEqual(boardBackup, resultBoard)){
-            boardBackup = new Board(resultBoard);
+        while (!resultBoard.isSolved() && !isBoardDeepEqual(boardBackup, resultBoard)) {
+            while (!resultBoard.isSolved() && !isBoardDeepEqual(boardBackup, resultBoard)) {
+                boardBackup = new Board(resultBoard);
 
-            //2. SEARCH AND SET SINGLE POSSIBLE CANDIDATE IN A CELL
-            resultBoard = searchAndSetSingleCandidateInCell(resultBoard);
+                //2. SEARCH AND SET SINGLE POSSIBLE CANDIDATE IN A CELL
+                resultBoard = searchAndSetSingleCandidateInCell(resultBoard);
 
-            //3. SEARCH AND SET SINGLE POSSIBLE CANDIDATE IN A SQUARE
-            resultBoard = searchAndSetSingleCandidateInSquare(resultBoard);
-
-            //4. SEARCH AND SET SINGLE POSSIBLE CANDIDATE IN A HORIZONTAL
-            resultBoard = searchAndSetSingleCandidateInHorizontal(resultBoard);
-
-            //5. SEARCH AND SET SINGLE POSSIBLE CANDIDATE IN A VERTICAL
-            resultBoard = searchAndSetSingleCandidateInVertical(resultBoard);
+                //3. SEARCH AND SET SINGLE POSSIBLE CANDIDATE
+                resultBoard = searchAndSetSingleCandidate(resultBoard);
+            }
+            //4. SEARCH AND SET LINED CANDIDATE IN SQUARE, REMOVE FROM OTHER SQUARE
+            resultBoard = cleanHorizontalVerticalByLiningCandidatesInSquare(resultBoard);
         }
-
         return resultBoard;
     }
 
@@ -96,56 +93,40 @@ public class BoardSolverUtil {
     }
 
     /**
-     * Searching Candidate in a square which only available on ONE Cell.
+     * Searching Candidate in a square, horizontal, or vertical which only available on ONE Cell.
      * Set that value into the Cell, and remove Candidate of that value from H, V, and S.
      * Returning updated Board in result.
      *
      * @param board
      * @return
      */
-    public static Board searchAndSetSingleCandidateInSquare(Board board){
-        Board result = new Board(board.getSquares());
-        boolean flag;
-        do {
-            flag = false;
-            for(Square square : board.getSquares()){
-                Cell singleCandidateCell = checkSingleCandidateInSquare(square);
-
-                if (singleCandidateCell != null){
-                    flag = true;
-                    board = substituteCellOfBoard(board, singleCandidateCell);
-                    board = cleanBoardBasedOnCell(board, singleCandidateCell);
-                    System.out.printf("searchAndSetSingleCandidateInSquare: Board cleaned for value %s in x = %s and y = %s%n",
-                            singleCandidateCell.getValue(), singleCandidateCell.getxPosition(), singleCandidateCell.getyPosition());
-                }
-            }
-        } while (flag);
-
-        return result;
-    }
-
-    /**
-     * Searching Candidate in a horizontal which only available on ONE Cell.
-     * Set that value into the Cell, and remove Candidate of that value from H, V, and S.
-     * Returning updated Board in result.
-     *
-     * @param board
-     * @return
-     */
-    public static Board searchAndSetSingleCandidateInHorizontal(Board board){
+    public static Board searchAndSetSingleCandidate(Board board){
         Board result = new Board(board.getSquares());
         boolean flag;
         do {
             flag = false;
             for(int i = 0; i < board.getSquares().size(); i++){
-                Square square = convertBoardHorizontalIntoSquare(board, i+1);
+                //Square
+                Square square = board.getSquares().get(i);
                 Cell singleCandidateCell = checkSingleCandidateInSquare(square);
+
+                //Horizontal
+                if (singleCandidateCell == null){
+                    square = convertBoardHorizontalIntoSquare(board, i+1);
+                    singleCandidateCell = checkSingleCandidateInSquare(square);
+                }
+
+                //Vertical
+                if (singleCandidateCell == null){
+                    square = convertBoardVerticalIntoSquare(board, i+1);
+                    singleCandidateCell = checkSingleCandidateInSquare(square);
+                }
 
                 if (singleCandidateCell != null){
                     flag = true;
                     board = substituteCellOfBoard(board, singleCandidateCell);
                     board = cleanBoardBasedOnCell(board, singleCandidateCell);
-                    System.out.printf("searchAndSetSingleCandidateInHorizontal: Board cleaned for value %s in x = %s and y = %s%n",
+                    System.out.printf("searchAndSetSingleCandidate: Board cleaned for value %s in x = %s and y = %s%n",
                             singleCandidateCell.getValue(), singleCandidateCell.getxPosition(), singleCandidateCell.getyPosition());
                 }
             }
@@ -154,28 +135,42 @@ public class BoardSolverUtil {
         return result;
     }
 
+
     /**
-     * Searching Candidate in a vertical which only available on ONE Cell.
+     * Searching Candidate in a square, horizontal, or vertical which only available on ONE Cell.
      * Set that value into the Cell, and remove Candidate of that value from H, V, and S.
      * Returning updated Board in result.
      *
      * @param board
      * @return
      */
-    public static Board searchAndSetSingleCandidateInVertical(Board board){
+    public static Board searchAndSetSingleCandidate(Board board, List<NakedCell> nakedCellList){
         Board result = new Board(board.getSquares());
         boolean flag;
         do {
             flag = false;
             for(int i = 0; i < board.getSquares().size(); i++){
-                Square square = convertBoardVerticalIntoSquare(board, i+1);
+                //Square
+                Square square = board.getSquares().get(i);
                 Cell singleCandidateCell = checkSingleCandidateInSquare(square);
+
+                //Horizontal
+                if (singleCandidateCell == null){
+                    square = convertBoardHorizontalIntoSquare(board, i+1);
+                    singleCandidateCell = checkSingleCandidateInSquare(square);
+                }
+
+                //Vertical
+                if (singleCandidateCell == null){
+                    square = convertBoardVerticalIntoSquare(board, i+1);
+                    singleCandidateCell = checkSingleCandidateInSquare(square);
+                }
 
                 if (singleCandidateCell != null){
                     flag = true;
                     board = substituteCellOfBoard(board, singleCandidateCell);
                     board = cleanBoardBasedOnCell(board, singleCandidateCell);
-                    System.out.printf("searchAndSetSingleCandidateInHorizontal: Board cleaned for value %s in x = %s and y = %s%n",
+                    System.out.printf("searchAndSetSingleCandidate: Board cleaned for value %s in x = %s and y = %s%n",
                             singleCandidateCell.getValue(), singleCandidateCell.getxPosition(), singleCandidateCell.getyPosition());
                 }
             }
@@ -183,4 +178,5 @@ public class BoardSolverUtil {
 
         return result;
     }
+
 }

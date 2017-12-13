@@ -3,11 +3,18 @@ package org.wahyaw.sudokusolver.utility;
 import org.wahyaw.sudokusolver.Main;
 import org.wahyaw.sudokusolver.entity.Board;
 import org.wahyaw.sudokusolver.entity.Cell;
+import org.wahyaw.sudokusolver.entity.NakedCell;
 import org.wahyaw.sudokusolver.entity.Square;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+
+import static org.wahyaw.sudokusolver.utility.ConverterUtil.convertBoardHorizontalIntoSquare;
+import static org.wahyaw.sudokusolver.utility.ConverterUtil.convertBoardVerticalIntoSquare;
+import static org.wahyaw.sudokusolver.utility.HelperUtil.checkHorizontalLineCandidateInSquare;
+import static org.wahyaw.sudokusolver.utility.HelperUtil.checkVerticalLineCandidateInSquare;
+import static org.wahyaw.sudokusolver.utility.HelperUtil.determineSquareIndexInBoardByCell;
 
 /**
  * Created by wahyaw on 11/20/2017.
@@ -146,7 +153,8 @@ public class RemoverUtil {
                     .getCells()
                     .get(3 * (arrayIndex % 3) + i % 3);
 
-            if (cellToBeModified.getValue() == null) {
+            if (cellToBeModified.getValue() == null
+                    && cellToBeModified.getCandidates().getCandidateList().get(candidateIndexToBeRemoved)) {
                 removeCandidateValueFromCell(cellToBeModified, candidateIndexToBeRemoved);
                 System.out.printf("Remove H Candidate with index %s in coordinate x = %s and y = %s%n",
                         candidateIndexToBeRemoved, cellToBeModified.getxPosition(), cellToBeModified.getyPosition());
@@ -178,7 +186,8 @@ public class RemoverUtil {
                     .getCells()
                     .get(arrayIndex%3 + 3*(i%3));
 
-            if (cellToBeModified.getValue() == null) {
+            if (cellToBeModified.getValue() == null
+                    && cellToBeModified.getCandidates().getCandidateList().get(candidateIndexToBeRemoved)) {
                 removeCandidateValueFromCell(cellToBeModified, candidateIndexToBeRemoved);
                 System.out.printf("Remove V Candidate with index %s in coordinate x = %s and y = %s%n",
                         candidateIndexToBeRemoved, cellToBeModified.getxPosition(), cellToBeModified.getyPosition());
@@ -209,7 +218,8 @@ public class RemoverUtil {
                 .get(xIndex/3 + 3*(yIndex/3));
 
         for(Cell cellToBeModified : squareToBeModified.getCells()) {
-            if (cellToBeModified.getValue() == null) {
+            if (cellToBeModified.getValue() == null
+                    && cellToBeModified.getCandidates().getCandidateList().get(candidateIndexToBeRemoved)) {
                 removeCandidateValueFromCell(cellToBeModified, candidateIndexToBeRemoved);
                 System.out.printf("Remove S Candidate with index %s in coordinate x = %s and y = %s%n",
                         candidateIndexToBeRemoved, cellToBeModified.getxPosition(), cellToBeModified.getyPosition());
@@ -217,6 +227,130 @@ public class RemoverUtil {
         }
 
         return result;
+    }
+
+    /**
+     * Removing duplicate value in horizontal/vertical naked list.
+     * Take the first, since the only coordinate matters is the Y or X coordinate
+     *
+     * @param nakedCellList
+     * @return
+     */
+    public static List<NakedCell> removeDuplicateNakedCells(List<NakedCell> nakedCellList){
+        List<NakedCell> result = new ArrayList<>();
+        List<Integer> helperList = new ArrayList<>();
+
+        //check whether value already added to helperList
+        for(NakedCell nakedCell : nakedCellList){
+            if(!helperList.contains(nakedCell.getValue())){
+                helperList.add(nakedCell.getValue());
+                result.add(nakedCell);
+            }
+        }
+
+        return result;
+    }
+
+
+    /**
+     * Find candidate in a horizontal line, and set to false if the cell is in different square than the input nakedCell
+     *
+     * @param board
+     * @param nakedCell
+     * @return
+     */
+    public static Board cleanHorizontalLineFromAnotherSquare(Board board, NakedCell nakedCell){
+        Square processedSquare = convertBoardHorizontalIntoSquare(board, nakedCell.getyPosition());
+        Board result = new Board(board.getSquares());
+        int candidateIndexToBeRemoved = nakedCell.getValue() - 1;
+
+        for(Cell cellToBeModified : processedSquare.getCells()) {
+            if (cellToBeModified.getValue() == null
+                    && determineSquareIndexInBoardByCell(cellToBeModified) != determineSquareIndexInBoardByCell(nakedCell)
+                    && cellToBeModified.getCandidates().getCandidateList().get(candidateIndexToBeRemoved)) {
+                removeCandidateValueFromCell(cellToBeModified, candidateIndexToBeRemoved);
+                System.out.printf("LINE - Remove H Candidate with index %s in coordinate x = %s and y = %s%n",
+                        candidateIndexToBeRemoved, cellToBeModified.getxPosition(), cellToBeModified.getyPosition());
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Find candidate in a vertical line, and set to false if the cell is in different square than the input nakedCell
+     *
+     * @param board
+     * @param nakedCell
+     * @return
+     */
+    public static Board cleanVerticalLineFromAnotherSquare(Board board, NakedCell nakedCell){
+        Square processedSquare = convertBoardVerticalIntoSquare(board, nakedCell.getxPosition());
+        Board result = new Board(board.getSquares());
+        int candidateIndexToBeRemoved = nakedCell.getValue() - 1;
+
+        for(Cell cellToBeModified : processedSquare.getCells()) {
+            if (cellToBeModified.getValue() == null
+                    && determineSquareIndexInBoardByCell(cellToBeModified) != determineSquareIndexInBoardByCell(nakedCell)
+                    && cellToBeModified.getCandidates().getCandidateList().get(candidateIndexToBeRemoved)) {
+                removeCandidateValueFromCell(cellToBeModified, candidateIndexToBeRemoved);
+                System.out.printf("LINE - Remove V Candidate with index %s in coordinate x = %s and y = %s%n",
+                        candidateIndexToBeRemoved, cellToBeModified.getxPosition(), cellToBeModified.getyPosition());
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Find candidate in a horizontal line, and set to false if the cell is in different square than the input nakedCell
+     *
+     * @param board
+     * @param nakedCellList
+     * @return
+     */
+    public static Board cleanHorizontalLineFromAnotherSquare(Board board, List<NakedCell> nakedCellList){
+        Board result = new Board(board.getSquares());
+
+        for(NakedCell nakedCell : nakedCellList){
+            cleanHorizontalLineFromAnotherSquare(board, nakedCell);
+        }
+
+        return result;
+    }
+
+    /**
+     * Find candidate in a vertical line, and set to false if the cell is in different square than the input nakedCell
+     *
+     * @param board
+     * @param nakedCellList
+     * @return
+     */
+    public static Board cleanVerticalLineFromAnotherSquare(Board board, List<NakedCell> nakedCellList){
+        Board result = new Board(board.getSquares());
+
+        for(NakedCell nakedCell : nakedCellList){
+            cleanVerticalLineFromAnotherSquare(board, nakedCell);
+        }
+
+        return result;
+    }
+
+    /**
+     * Find candidate in a vertical line, and set to false if the cell is in different square
+     * @param board
+     * @return
+     */
+    public static Board cleanHorizontalVerticalByLiningCandidatesInSquare(Board board){
+        Board resultBoard = new Board(board.getSquares());
+
+        List<NakedCell> nakedCellHorizontal = checkHorizontalLineCandidateInSquare(resultBoard.getSquares());
+        List<NakedCell> nakedCellVertical = checkVerticalLineCandidateInSquare(resultBoard.getSquares());
+
+        resultBoard = cleanVerticalLineFromAnotherSquare(resultBoard, nakedCellVertical);
+        resultBoard = cleanHorizontalLineFromAnotherSquare(resultBoard, nakedCellHorizontal);
+
+        return resultBoard;
     }
 
 }

@@ -57,6 +57,13 @@ public class SolverUtil {
         return null;
     }
 
+    /**
+     * Checking whether a Square has only one possibility for value (one candidate is true).
+     * If any, set value into that Cell.
+     *
+     * @param square
+     * @return
+     */
     public static Cell checkSingleCandidateInSquare(Square square){
         List<Integer> unsolvedCellValueList = generateUnsolvedCellValueList(square);
         Square resultSquare = new Square(square.getCells());
@@ -90,5 +97,7 @@ public class SolverUtil {
 
         return result;
     }
+
+
 
 }

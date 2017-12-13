@@ -1,7 +1,7 @@
 package org.wahyaw.sudokusolver;
 
 import org.wahyaw.sudokusolver.entity.Board;
-import org.wahyaw.sudokusolver.problem.Medium;
+import org.wahyaw.sudokusolver.problem.Hard;
 
 import java.util.logging.Logger;
 
@@ -15,7 +15,7 @@ public class Main {
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args){
-        Board board = solveBoard(Medium.medium1);
+        Board board = solveBoard(Hard.hard1);
         printBoard(board);
         LOGGER.info("FINISHED");
     }
