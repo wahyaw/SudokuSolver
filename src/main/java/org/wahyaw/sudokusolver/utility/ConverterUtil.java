@@ -4,11 +4,14 @@ import org.apache.commons.collections.list.FixedSizeList;
 import org.wahyaw.sudokusolver.Main;
 import org.wahyaw.sudokusolver.entity.Board;
 import org.wahyaw.sudokusolver.entity.Cell;
+import org.wahyaw.sudokusolver.entity.NakedCell;
 import org.wahyaw.sudokusolver.entity.Square;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+
+import static org.wahyaw.sudokusolver.utility.HelperUtil.determineSquareIndexInBoardByCell;
 
 /**
  * Created by wahyaw on 11/20/2017.
@@ -196,7 +199,7 @@ public class ConverterUtil {
 
             //simple validation
             if(!cell.getyPosition().equals(rowToBeTaken)){
-                System.out.printf("wrong cell taken on convertBoardHorizontalIntoSquare " + i);
+                System.out.printf("wrong cell taken on convertBoardHorizontalIntoSquare %s %n" + i);
             }
         }
 
@@ -241,10 +244,33 @@ public class ConverterUtil {
 
             //simple validation
             if(!cell.getxPosition().equals(columnToBeTaken)){
-                System.out.printf("wrong cell taken on convertBoardVerticalIntoSquare " + i);
+                System.out.printf("wrong cell taken on convertBoardVerticalIntoSquare %s %n" + i);
             }
         }
 
         return new Square(cells);
+    }
+
+    /**
+     * Return Cell by coordinate of cell (x and y)
+     * @param board
+     * @param xCoordinate
+     * @param yCoordinate
+     * @return
+     */
+    public static Cell getCellFromBoardByCoordinate(Board board, int xCoordinate, int yCoordinate){
+        NakedCell nakedCell = new NakedCell(xCoordinate, yCoordinate);
+        int squareIndex = determineSquareIndexInBoardByCell(nakedCell);
+
+        Square square = board.getSquares().get(squareIndex);
+
+        //TODO: REFACTOR THIS SO IT WILL EFFICIENTLY CHOOSE THE CORRECT CELL
+        for(Cell cell : square.getCells()){
+           if(cell.getxPosition() == xCoordinate && cell.getyPosition() == yCoordinate){
+               return cell;
+           }
+        }
+
+        return null;
     }
 }

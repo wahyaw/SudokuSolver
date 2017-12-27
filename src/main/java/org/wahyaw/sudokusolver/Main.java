@@ -15,7 +15,7 @@ public class Main {
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args){
-        Board board = solveBoard(Hard.hard1);
+        Board board = solveBoard(Hard.hard2);
         printBoard(board);
         LOGGER.info("FINISHED");
     }

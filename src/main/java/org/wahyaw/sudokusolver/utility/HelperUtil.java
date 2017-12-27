@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static org.wahyaw.sudokusolver.utility.ConverterUtil.convertBoardHorizontalIntoSquare;
+import static org.wahyaw.sudokusolver.utility.ConverterUtil.convertBoardVerticalIntoSquare;
+import static org.wahyaw.sudokusolver.utility.ConverterUtil.getCellFromBoardByCoordinate;
 import static org.wahyaw.sudokusolver.utility.RemoverUtil.removeDuplicateNakedCells;
 
 /**
@@ -340,5 +343,158 @@ public class HelperUtil {
         //(3*(Y DIV 3)) + (X DIV 3)
         return (3 * (yCoordinate / 3)) + (xCoordinate / 3);
     }
+
+    /**
+     * Find out how many active x (index (0-8)) candidate in a square.
+     * @param candidateToBeCheckedIndex
+     * @param square
+     * @return
+     */
+    public static int findNumberOfTrueCandidateInSquare(int candidateToBeCheckedIndex, Square square){
+        int result = 0;
+
+        for(Cell cell : square.getCells()){
+            if(cell.getCandidates().getCandidateList().get(candidateToBeCheckedIndex)){
+                result += 1;
+            }
+        }
+
+        return result;
+    }
+
+    public static List<XWing> generateXWingListFromBoard(Board board){
+        List<XWing> result = new ArrayList<>();
+
+        //loop candidates
+        for(int candidateIndex = 0; candidateIndex < 9; candidateIndex++){
+            for(int squareIndex = 0; squareIndex < board.getSquares().size(); squareIndex++){
+                if(squareIndex%3 !=2 ){
+                    Square loopedSquare = board.getSquares().get(squareIndex);
+
+                    for(int upperLeftIndex = 0; upperLeftIndex < loopedSquare.getCells().size(); upperLeftIndex++){
+                        Cell upperLeft = loopedSquare.getCells().get(upperLeftIndex);
+                        //boolean isContinueToNextUpperLeftIndex = false;
+
+                        //convert board H and V to square
+                        Square convertedHBoardTop = convertBoardHorizontalIntoSquare(board, upperLeft.getyPosition());
+                        Square convertedVBoardLeft = convertBoardVerticalIntoSquare(board, upperLeft.getxPosition());
+
+                        int hTop = findNumberOfTrueCandidateInSquare(candidateIndex, convertedHBoardTop);
+                        int vLeft = findNumberOfTrueCandidateInSquare(candidateIndex, convertedVBoardLeft);
+
+                        ///////^^^^^^^^^^^^^^^^^TOP LEFT^^^^^^^^^^^^^^^^^
+
+                        //if H and V both > 2 candidates available, continue to next cell
+                        if(hTop > 2 && vLeft > 2){
+                            continue; //means XWing cannot be applied in cell
+                        }
+
+                        if(upperLeft.getValue() != null
+                                || !upperLeft.getCandidates().getCandidateList().get(candidateIndex)){
+                            continue; //continue to next cell if cell is solved or candidate = false
+                        }
+                        XWing xWing = new XWing(candidateIndex+1, upperLeft);
+
+                        ///////^^^^^^^^^^^^^^^^^TOP RIGHT^^^^^^^^^^^^^^^^^
+
+                        for(int upperRightIndex = 0; upperRightIndex < convertedHBoardTop.getCells().size(); upperRightIndex++){
+                            Cell upperRight = convertedHBoardTop.getCells().get(upperRightIndex);
+                            if(upperRight.getValue() != null
+                                    || !upperRight.getCandidates().getCandidateList().get(candidateIndex)
+                                    || upperLeft.getxPosition() >= upperRight.getxPosition()){
+                                //continue to next cell in square if cell is not positioned right of current upper left or already removed from candidate
+                                continue;
+                            }
+                            Square convertedVBoardRight = convertBoardVerticalIntoSquare(board, upperRight.getxPosition());
+                            int vRight = findNumberOfTrueCandidateInSquare(candidateIndex, convertedVBoardRight);
+
+                            //if H and V both > 2 candidates available, continue to next cell
+                            if(hTop > 2 && vRight > 2){
+                                //means XWing cannot be applied in cell
+                                //isContinueToNextUpperLeftIndex = true;
+                                continue;
+                            }
+
+                            /*if(upperRightIndex == convertedHBoardTop.getCells().size()-1 ){
+                                //means no XWing in board
+                                break;
+                            }*/
+
+                            /*if(isContinueToNextUpperLeftIndex){
+                                continue;
+                            }*/
+
+                            xWing.setUpperRight(upperRight);
+                            break;
+                        }
+
+                        ///////^^^^^^^^^^^^^^^^^BOTTOM LEFT^^^^^^^^^^^^^^^^^
+                        if(xWing.getUpperLeft() == null
+                                || xWing.getUpperRight() == null){
+                            continue;
+                        }
+
+                        for(int lowerLeftIndex = 0; lowerLeftIndex < convertedVBoardLeft.getCells().size(); lowerLeftIndex++){
+                            Cell lowerLeft = convertedVBoardLeft.getCells().get(lowerLeftIndex);
+
+                            if(lowerLeft.getValue() != null
+                                    || !lowerLeft.getCandidates().getCandidateList().get(candidateIndex)
+                                    || upperLeft.getyPosition() >= lowerLeft.getyPosition()){
+                                //continue to next cell in square if cell is not positioned right of current upper left or already removed from candidate
+                                continue;
+                            }
+
+                            Square convertedVBoardBoard = convertBoardHorizontalIntoSquare(board, lowerLeft.getyPosition());
+                            int hBot = findNumberOfTrueCandidateInSquare(candidateIndex, convertedVBoardBoard);
+
+                            //if H and V both > 2 candidates available, continue to next cell
+                            if(hBot > 2 && vLeft > 2){
+                                //means XWing cannot be applied in cell
+                                break;
+                            }
+
+                            /*if(lowerLeftIndex == convertedHBoardTop.getCells().size()-1 ){
+                                //means no XWing in board
+                                break;
+                            }*/
+
+                            xWing.setLowerLeft(lowerLeft);
+                            break;
+                        }
+
+                        ///////^^^^^^^^^^^^^^^^^BOTTOM RIGHT^^^^^^^^^^^^^^^^^
+                        //check all other already filled before filling bottom right
+                        if(xWing.getUpperLeft() != null
+                                && xWing.getUpperRight() != null
+                                && xWing.getLowerLeft() != null){
+
+                            Cell lowerRight = getCellFromBoardByCoordinate(board,
+                                    xWing.getUpperRight().getxPosition(),
+                                    xWing.getLowerLeft().getyPosition());
+
+                            if(lowerRight.getValue() != null
+                                    || !lowerRight.getCandidates().getCandidateList().get(candidateIndex)
+                                    || upperLeft.getyPosition() >= lowerRight.getyPosition()){
+                                continue;
+                            }
+
+                            xWing.setLowerRight(lowerRight);
+
+                            //validate all cell is not on one square
+                            if (xWing.isAllCellInOneSquare()){
+                                continue;
+                            }
+
+                            ///////^^^^^^^^^^^^^^^^^PUSH^^^^^^^^^^^^^^^^^
+                            result.add(xWing);
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
 
 }

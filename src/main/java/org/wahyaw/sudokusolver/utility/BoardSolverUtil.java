@@ -1,11 +1,9 @@
 package org.wahyaw.sudokusolver.utility;
 
 import org.wahyaw.sudokusolver.Main;
-import org.wahyaw.sudokusolver.entity.Board;
-import org.wahyaw.sudokusolver.entity.Cell;
-import org.wahyaw.sudokusolver.entity.NakedCell;
-import org.wahyaw.sudokusolver.entity.Square;
+import org.wahyaw.sudokusolver.entity.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -38,16 +36,20 @@ public class BoardSolverUtil {
 
         while (!resultBoard.isSolved() && !isBoardDeepEqual(boardBackup, resultBoard)) {
             while (!resultBoard.isSolved() && !isBoardDeepEqual(boardBackup, resultBoard)) {
-                boardBackup = new Board(resultBoard);
+                while (!resultBoard.isSolved() && !isBoardDeepEqual(boardBackup, resultBoard)) {
+                    boardBackup = new Board(resultBoard);
 
-                //2. SEARCH AND SET SINGLE POSSIBLE CANDIDATE IN A CELL
-                resultBoard = searchAndSetSingleCandidateInCell(resultBoard);
+                    //2. SEARCH AND SET SINGLE POSSIBLE CANDIDATE IN A CELL
+                    resultBoard = searchAndSetSingleCandidateInCell(resultBoard);
 
-                //3. SEARCH AND SET SINGLE POSSIBLE CANDIDATE
-                resultBoard = searchAndSetSingleCandidate(resultBoard);
+                    //3. SEARCH AND SET SINGLE POSSIBLE CANDIDATE
+                    resultBoard = searchAndSetSingleCandidate(resultBoard);
+                }
+                //4. SEARCH AND SET LINED CANDIDATE IN SQUARE, REMOVE FROM OTHER SQUARE
+                resultBoard = cleanHorizontalVerticalByLiningCandidatesInSquare(resultBoard);
             }
-            //4. SEARCH AND SET LINED CANDIDATE IN SQUARE, REMOVE FROM OTHER SQUARE
-            resultBoard = cleanHorizontalVerticalByLiningCandidatesInSquare(resultBoard);
+            //5. XWING
+            resultBoard = cleanBoardFromXWing(board);
         }
         return resultBoard;
     }
@@ -134,49 +136,4 @@ public class BoardSolverUtil {
 
         return result;
     }
-
-
-    /**
-     * Searching Candidate in a square, horizontal, or vertical which only available on ONE Cell.
-     * Set that value into the Cell, and remove Candidate of that value from H, V, and S.
-     * Returning updated Board in result.
-     *
-     * @param board
-     * @return
-     */
-    public static Board searchAndSetSingleCandidate(Board board, List<NakedCell> nakedCellList){
-        Board result = new Board(board.getSquares());
-        boolean flag;
-        do {
-            flag = false;
-            for(int i = 0; i < board.getSquares().size(); i++){
-                //Square
-                Square square = board.getSquares().get(i);
-                Cell singleCandidateCell = checkSingleCandidateInSquare(square);
-
-                //Horizontal
-                if (singleCandidateCell == null){
-                    square = convertBoardHorizontalIntoSquare(board, i+1);
-                    singleCandidateCell = checkSingleCandidateInSquare(square);
-                }
-
-                //Vertical
-                if (singleCandidateCell == null){
-                    square = convertBoardVerticalIntoSquare(board, i+1);
-                    singleCandidateCell = checkSingleCandidateInSquare(square);
-                }
-
-                if (singleCandidateCell != null){
-                    flag = true;
-                    board = substituteCellOfBoard(board, singleCandidateCell);
-                    board = cleanBoardBasedOnCell(board, singleCandidateCell);
-                    System.out.printf("searchAndSetSingleCandidate: Board cleaned for value %s in x = %s and y = %s%n",
-                            singleCandidateCell.getValue(), singleCandidateCell.getxPosition(), singleCandidateCell.getyPosition());
-                }
-            }
-        } while (flag);
-
-        return result;
-    }
-
 }

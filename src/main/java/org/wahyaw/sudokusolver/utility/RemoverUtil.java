@@ -1,10 +1,7 @@
 package org.wahyaw.sudokusolver.utility;
 
 import org.wahyaw.sudokusolver.Main;
-import org.wahyaw.sudokusolver.entity.Board;
-import org.wahyaw.sudokusolver.entity.Cell;
-import org.wahyaw.sudokusolver.entity.NakedCell;
-import org.wahyaw.sudokusolver.entity.Square;
+import org.wahyaw.sudokusolver.entity.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,9 +9,7 @@ import java.util.logging.Logger;
 
 import static org.wahyaw.sudokusolver.utility.ConverterUtil.convertBoardHorizontalIntoSquare;
 import static org.wahyaw.sudokusolver.utility.ConverterUtil.convertBoardVerticalIntoSquare;
-import static org.wahyaw.sudokusolver.utility.HelperUtil.checkHorizontalLineCandidateInSquare;
-import static org.wahyaw.sudokusolver.utility.HelperUtil.checkVerticalLineCandidateInSquare;
-import static org.wahyaw.sudokusolver.utility.HelperUtil.determineSquareIndexInBoardByCell;
+import static org.wahyaw.sudokusolver.utility.HelperUtil.*;
 
 /**
  * Created by wahyaw on 11/20/2017.
@@ -30,7 +25,12 @@ public class RemoverUtil {
      * @return
      */
     public static void removeCandidateValueFromCell(Cell cell, int candidateIndex){
-        if(cell.getValue() == null){
+        if(cell.getValue() == null
+                && cell.getCandidates().getCandidateList().get(candidateIndex)){
+            System.out.printf("removeCandidateValueFromCell: remove candidate %s from coordinate x = %s and y = %s%n",
+                    candidateIndex + 1,
+                    cell.getxPosition(),
+                    cell.getyPosition());
             cell.getCandidates().getCandidateList().set(candidateIndex, false);
         }
     }
@@ -53,6 +53,63 @@ public class RemoverUtil {
         return result;
     }
 
+    /**
+     * Set FALSE into candidate of certain index, EXCEPT exceptionCell.
+     *
+     * @param square
+     * @param candidateToBeRemoved
+     * @param exceptionCell
+     * @return
+     */
+    public static Square removeAllCandidateValueFromAllCellWithException(Square square, int candidateToBeRemoved, Cell exceptionCell){
+        Square result = new Square(square);
+        int candidateIndex = candidateToBeRemoved - 1;
+
+        for(Cell cell : result.getCells()){
+            if (!(cell.getxPosition() == exceptionCell.getxPosition()
+                && cell.getyPosition() == exceptionCell.getyPosition())){
+
+                removeCandidateValueFromCell(cell, candidateIndex);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * MUTATION
+     * Set FALSE into candidate of certain index, EXCEPT exceptionCell.
+     *
+     * @param square
+     * @param candidateToBeRemoved
+     * @param exceptionCellList
+     * @return
+     */
+    public static Square removeAllCandidateValueFromAllCellWithException(Square square, int candidateToBeRemoved, List<Cell> exceptionCellList){
+        Square result = square;
+        int candidateIndex = candidateToBeRemoved - 1;
+
+        for(Cell cell : result.getCells()){
+            if(cell.getValue() == null
+                    && cell.getCandidates().getCandidateList().get(candidateIndex)) {
+                boolean isException = false;
+
+                for (Cell exceptionCell : exceptionCellList) {
+                    if ((cell.getxPosition() == exceptionCell.getxPosition()
+                            && cell.getyPosition() == exceptionCell.getyPosition())) {
+
+                        isException = true;
+                    }
+                }
+
+                if (!isException) {
+                    removeCandidateValueFromCell(cell, candidateIndex);
+                }
+            }
+        }
+
+        return result;
+    }
 
     /**
      * Removing all solved cell value from candidates.
@@ -351,6 +408,47 @@ public class RemoverUtil {
         resultBoard = cleanHorizontalLineFromAnotherSquare(resultBoard, nakedCellHorizontal);
 
         return resultBoard;
+    }
+
+    public static Board cleanBoardFromXWing(Board board){
+        Board result = new Board(board);
+        List<XWing> xWingList = generateXWingListFromBoard(board);
+        for(XWing xWing : xWingList) {
+            Square convertedHBoardTop = convertBoardHorizontalIntoSquare(result, xWing.getUpperLeft().getyPosition());
+            Square convertedVBoardLeft = convertBoardVerticalIntoSquare(result, xWing.getUpperLeft().getxPosition());
+            Square convertedHBoardBottom = convertBoardHorizontalIntoSquare(result, xWing.getLowerRight().getyPosition());
+            Square convertedVBoardRight = convertBoardVerticalIntoSquare(result, xWing.getLowerRight().getxPosition());
+
+            List<Cell> convertedHBoardTopCellList = new ArrayList<>();
+            convertedHBoardTopCellList.add(xWing.getUpperLeft());
+            convertedHBoardTopCellList.add(xWing.getUpperRight());
+            System.out.println("XWing remove convertedHBoardTop start");
+            removeAllCandidateValueFromAllCellWithException(convertedHBoardTop, xWing.getValue(), convertedHBoardTopCellList);
+            System.out.println("Xwing remove convertedHBoardTop end");
+
+            List<Cell> convertedVBoardLeftCellList = new ArrayList<>();
+            convertedVBoardLeftCellList.add(xWing.getUpperLeft());
+            convertedVBoardLeftCellList.add(xWing.getLowerLeft());
+            System.out.println("XWing remove convertedVBoardLeft start");
+            removeAllCandidateValueFromAllCellWithException(convertedVBoardLeft, xWing.getValue(), convertedVBoardLeftCellList);
+            System.out.println("Xwing remove convertedVBoardLeft end");
+
+            List<Cell> convertedHBoardBottomCellList = new ArrayList<>();
+            convertedHBoardBottomCellList.add(xWing.getLowerLeft());
+            convertedHBoardBottomCellList.add(xWing.getLowerRight());
+            System.out.println("XWing remove convertedHBoardBottom start");
+            removeAllCandidateValueFromAllCellWithException(convertedHBoardBottom, xWing.getValue(), convertedHBoardBottomCellList);
+            System.out.println("Xwing remove convertedHBoardBottom end");
+
+            List<Cell> convertedVBoardRightCellList = new ArrayList<>();
+            convertedVBoardRightCellList.add(xWing.getUpperRight());
+            convertedVBoardRightCellList.add(xWing.getLowerRight());
+            System.out.println("XWing remove convertedVBoardRight start");
+            removeAllCandidateValueFromAllCellWithException(convertedVBoardRight, xWing.getValue(), convertedVBoardRightCellList);
+            System.out.println("Xwing remove convertedVBoardRight end");
+        }
+
+        return result;
     }
 
 }
