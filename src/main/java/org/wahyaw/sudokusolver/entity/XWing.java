@@ -8,7 +8,7 @@ import static org.wahyaw.sudokusolver.utility.HelperUtil.determineSquareIndexInB
  * Class to save XWing position.
  */
 public class XWing {
-    protected Integer value;
+    private Integer value;
     private Cell upperLeft;
     private Cell upperRight;
     private Cell lowerLeft;

@@ -49,4 +49,18 @@ public class CandidatesCount {
 
         this.candidateCountList = candidateCountList;
     }
+
+    /**
+     * Return number of candidate which only have 2 possibilities in a square (usually converted square)
+     * @return
+     */
+    public int getCountOfTwoCandidates(){
+        int result = 0;
+        for(Integer candidateCount : this.candidateCountList){
+            if(candidateCount == 2){
+                result++;
+            }
+        }
+        return result;
+    }
 }

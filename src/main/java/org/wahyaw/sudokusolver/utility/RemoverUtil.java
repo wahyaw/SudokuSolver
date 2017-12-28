@@ -81,13 +81,13 @@ public class RemoverUtil {
      * Set FALSE into candidate of certain index, EXCEPT exceptionCell.
      *
      * @param square
-     * @param candidateToBeRemoved
+     * @param candidateIndexToBeRemoved
      * @param exceptionCellList
      * @return
      */
-    public static Square removeAllCandidateValueFromAllCellWithException(Square square, int candidateToBeRemoved, List<Cell> exceptionCellList){
+    public static Square removeAllCandidateValueFromAllCellWithException(Square square, int candidateIndexToBeRemoved, List<Cell> exceptionCellList){
         Square result = square;
-        int candidateIndex = candidateToBeRemoved - 1;
+        int candidateIndex = candidateIndexToBeRemoved - 1;
 
         for(Cell cell : result.getCells()){
             if(cell.getValue() == null
@@ -104,6 +104,39 @@ public class RemoverUtil {
 
                 if (!isException) {
                     removeCandidateValueFromCell(cell, candidateIndex);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * MUTATION
+     * Set FALSE into ALL candidate in a hidden pair cell, EXCEPT left value and right value.
+     *
+     * @param square
+     * @param hiddenPair
+     * @return
+     */
+    public static Square removeHiddenPair(Square square, HiddenPair hiddenPair){
+        Square result = square;
+
+        for(Cell hiddenCell : hiddenPair.getCellsAsList()){
+            for(Cell cell : square.getCells()){
+                if (isCellDeepEqual(cell, hiddenCell)){
+                    for(int candidateIndex = 0; candidateIndex < cell.getCandidates().getCandidateList().size(); candidateIndex++){
+                        if(cell.getCandidates().getCandidateList().get(candidateIndex)
+                                && (candidateIndex != hiddenPair.getFirstValue() && candidateIndex != hiddenPair.getSecondValue())){
+                            cell.getCandidates().getCandidateList().set(candidateIndex, false);
+                            System.out.printf("removeHiddenPair: remove candidate %s from coordinate x = %s and y = %s based on hidden pair %s and %s%n",
+                                    candidateIndex + 1,
+                                    cell.getxPosition(),
+                                    cell.getyPosition(),
+                                    hiddenPair.getFirstValue(),
+                                    hiddenPair.getSecondValue());
+                        }
+                    }
                 }
             }
         }
@@ -410,6 +443,12 @@ public class RemoverUtil {
         return resultBoard;
     }
 
+    /**
+     * Remove candidate based on XWing
+     *
+     * @param board
+     * @return
+     */
     public static Board cleanBoardFromXWing(Board board){
         Board result = new Board(board);
         List<XWing> xWingList = generateXWingListFromBoard(board);
@@ -449,6 +488,29 @@ public class RemoverUtil {
         }
 
         return result;
+    }
+
+    /**
+     * MUTATION!!
+     * Remove candidate based on Hidden Pair
+     *
+     * @param board
+     * @return
+     */
+    public static Board cleanBoardFromNakedPair(Board board){
+        List<HiddenPair> hiddenPairList = generateHiddenPairListFromBoard(board);
+        for(HiddenPair hiddenPair : hiddenPairList){
+            Square processedSquare = new Square();
+
+            if (hiddenPair.isHorizontalAligned()){
+                processedSquare = convertBoardHorizontalIntoSquare(board, hiddenPair.getLeftCell().getyPosition());
+            } else {
+                processedSquare = convertBoardVerticalIntoSquare(board, hiddenPair.getLeftCell().getxPosition());
+            }
+            removeHiddenPair(processedSquare, hiddenPair);
+        }
+
+        return board;
     }
 
 }

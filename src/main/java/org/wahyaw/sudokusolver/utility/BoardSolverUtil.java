@@ -37,19 +37,23 @@ public class BoardSolverUtil {
         while (!resultBoard.isSolved() && !isBoardDeepEqual(boardBackup, resultBoard)) {
             while (!resultBoard.isSolved() && !isBoardDeepEqual(boardBackup, resultBoard)) {
                 while (!resultBoard.isSolved() && !isBoardDeepEqual(boardBackup, resultBoard)) {
-                    boardBackup = new Board(resultBoard);
+                    while (!resultBoard.isSolved() && !isBoardDeepEqual(boardBackup, resultBoard)) {
+                        boardBackup = new Board(resultBoard);
 
-                    //2. SEARCH AND SET SINGLE POSSIBLE CANDIDATE IN A CELL
-                    resultBoard = searchAndSetSingleCandidateInCell(resultBoard);
+                        //2. SEARCH AND SET SINGLE POSSIBLE CANDIDATE IN A CELL
+                        resultBoard = searchAndSetSingleCandidateInCell(resultBoard);
 
-                    //3. SEARCH AND SET SINGLE POSSIBLE CANDIDATE
-                    resultBoard = searchAndSetSingleCandidate(resultBoard);
+                        //3. SEARCH AND SET SINGLE POSSIBLE CANDIDATE
+                        resultBoard = searchAndSetSingleCandidate(resultBoard);
+                    }
+                    //4. SEARCH AND SET LINED CANDIDATE IN SQUARE, REMOVE FROM OTHER SQUARE
+                    resultBoard = cleanHorizontalVerticalByLiningCandidatesInSquare(resultBoard);
                 }
-                //4. SEARCH AND SET LINED CANDIDATE IN SQUARE, REMOVE FROM OTHER SQUARE
-                resultBoard = cleanHorizontalVerticalByLiningCandidatesInSquare(resultBoard);
+                //5. HIDDEN PAIR, AND REMOVE CANDIDATES BASED ON IT
+                resultBoard = cleanBoardFromNakedPair(resultBoard);
             }
-            //5. XWING
-            resultBoard = cleanBoardFromXWing(board);
+            //6. XWING, AND REMOVE CANDIDATES BASED ON IT
+            resultBoard = cleanBoardFromXWing(resultBoard);
         }
         return resultBoard;
     }

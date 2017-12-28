@@ -362,6 +362,11 @@ public class HelperUtil {
         return result;
     }
 
+    /**
+     * Generating XWing list which available in board
+     * @param board
+     * @return
+     */
     public static List<XWing> generateXWingListFromBoard(Board board){
         List<XWing> result = new ArrayList<>();
 
@@ -411,18 +416,8 @@ public class HelperUtil {
                             //if H and V both > 2 candidates available, continue to next cell
                             if(hTop > 2 && vRight > 2){
                                 //means XWing cannot be applied in cell
-                                //isContinueToNextUpperLeftIndex = true;
                                 continue;
                             }
-
-                            /*if(upperRightIndex == convertedHBoardTop.getCells().size()-1 ){
-                                //means no XWing in board
-                                break;
-                            }*/
-
-                            /*if(isContinueToNextUpperLeftIndex){
-                                continue;
-                            }*/
 
                             xWing.setUpperRight(upperRight);
                             break;
@@ -452,11 +447,6 @@ public class HelperUtil {
                                 //means XWing cannot be applied in cell
                                 break;
                             }
-
-                            /*if(lowerLeftIndex == convertedHBoardTop.getCells().size()-1 ){
-                                //means no XWing in board
-                                break;
-                            }*/
 
                             xWing.setLowerLeft(lowerLeft);
                             break;
@@ -497,4 +487,82 @@ public class HelperUtil {
     }
 
 
+    /**
+     * Search Hidden Pair in board. Only search in horizontal or vertical based on parameter.
+     *
+     * @param board
+     * @param isHorizontal
+     * @return
+     */
+    public static List<HiddenPair> generateHiddenPairListFromBoard(Board board, boolean isHorizontal){
+        List<HiddenPair> result = new ArrayList<>();
+        for(int indexToBeTaken = 1; indexToBeTaken <= 9; indexToBeTaken++) {
+            Square processedSquare = new Square();
+            if(isHorizontal) {
+                processedSquare = convertBoardHorizontalIntoSquare(board, indexToBeTaken);
+            } else {
+                processedSquare = convertBoardVerticalIntoSquare(board, indexToBeTaken);
+            }
+            CandidatesCount candidatesCount = new CandidatesCount(processedSquare);
+
+            if (candidatesCount.getCountOfTwoCandidates() >= 2) {
+
+                for (int firstCandidateIndex = 0; firstCandidateIndex < candidatesCount.getCandidateList().size(); firstCandidateIndex++) {
+                    if (candidatesCount.getCandidateList().get(firstCandidateIndex) != 2) {
+                        continue;
+                    }
+
+                    for (int leftIndex = 0; leftIndex < candidatesCount.getCandidateList().size(); leftIndex++) {
+                        Cell leftCell = processedSquare.getCells().get(leftIndex);
+
+                        if (leftCell.getValue() == null
+                                && leftCell.getCandidates().getCandidateList().get(firstCandidateIndex)) {
+                            for (int secondCandidateIndex = 0; secondCandidateIndex < candidatesCount.getCandidateList().size(); secondCandidateIndex++) {
+                                if (candidatesCount.getCandidateList().get(secondCandidateIndex) != 2
+                                        || secondCandidateIndex <= firstCandidateIndex
+                                        || !leftCell.getCandidates().getCandidateList().get(secondCandidateIndex)) {
+                                    continue;
+                                }
+
+                                //saving to new object
+                                HiddenPair hiddenPair = new HiddenPair(firstCandidateIndex, secondCandidateIndex, leftCell);
+
+                                //RIGHT CELL
+                                for (int rightIndex = 0; rightIndex < candidatesCount.getCandidateList().size(); rightIndex++) {
+                                    Cell rightCell = processedSquare.getCells().get(rightIndex);
+
+                                    if (rightCell.getCandidates().getCandidateList().get(firstCandidateIndex)
+                                            && rightCell.getCandidates().getCandidateList().get(secondCandidateIndex)
+                                            && (leftCell.getxPosition() != rightCell.getxPosition() || leftCell.getyPosition() != rightCell.getyPosition())
+                                            && (leftCell.getxPosition() <= rightCell.getxPosition() && leftCell.getyPosition() <= rightCell.getyPosition())) {
+                                        hiddenPair.setRightCell(rightCell);
+                                        break;
+                                    }
+                                }
+
+                                if (hiddenPair.isAllPropertyNotNull()) {
+                                    result.add(hiddenPair);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Search Hidden Pair in board.
+     *
+     * @param board
+     * @return
+     */
+    public static List<HiddenPair> generateHiddenPairListFromBoard(Board board){
+        List<HiddenPair> result = generateHiddenPairListFromBoard(board, true);
+        result.addAll(generateHiddenPairListFromBoard(board, false));
+
+        return result;
+    }
 }
